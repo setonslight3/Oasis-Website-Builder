@@ -9,6 +9,7 @@ import { RiskScoreCard } from "@/components/RiskScoreCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShieldCheck, Phone, User, Globe, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import flaggedData from "@/data/flagged.json";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
@@ -23,11 +24,16 @@ export default function Flagr() {
     queryKey: ["flagged", searchQuery],
     queryFn: async () => {
       if (!searchQuery) return [];
-      const response = await fetch(`${API_URL}/flagged/search?q=${encodeURIComponent(searchQuery)}`);
-      if (!response.ok) {
-        throw new Error("Failed to search flagged reports");
+      try {
+        const response = await fetch(`${API_URL}/flagged/search?q=${encodeURIComponent(searchQuery)}`);
+        if (!response.ok) {
+          throw new Error("Failed to search flagged reports");
+        }
+        return response.json();
+      } catch (e) {
+        console.warn("Using static flagged data", e);
+        return flaggedData.filter(flag => flag.target.includes(searchQuery));
       }
-      return response.json();
     },
     enabled: !!searchQuery,
   });
@@ -49,7 +55,7 @@ export default function Flagr() {
     setInputValue("");
     setBank("");
     setHasSearched(false);
-    setResults([]);
+    setSearchQuery("");
   };
 
   return (

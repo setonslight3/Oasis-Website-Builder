@@ -8,6 +8,8 @@ import { ArrowLeft, Sparkles, CheckCircle, Search, ShieldCheck } from "lucide-re
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
+import experiencesData from "@/data/experiences.json";
+import flaggedData from "@/data/flagged.json";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
@@ -15,14 +17,19 @@ export default function Results() {
   const [query, setQuery] = useState("");
   const [isPhone, setIsPhone] = useState(false);
 
-  const { data: allExperiences = [], isLoading: experiencesLoading } = useQuery({
+  const { data: allExperiences = experiencesData, isLoading: experiencesLoading } = useQuery({
     queryKey: ["experiences"],
     queryFn: async () => {
-      const response = await fetch(`${API_URL}/experiences`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch experiences");
+      try {
+        const response = await fetch(`${API_URL}/experiences`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch experiences");
+        }
+        return response.json();
+      } catch (e) {
+        console.warn("Using static experiences data", e);
+        return experiencesData;
       }
-      return response.json();
     },
   });
 
@@ -30,11 +37,16 @@ export default function Results() {
     queryKey: ["flagged", query],
     queryFn: async () => {
       if (!query || !isPhoneQuery(query)) return [];
-      const response = await fetch(`${API_URL}/flagged/search?q=${encodeURIComponent(query)}`);
-      if (!response.ok) {
-        throw new Error("Failed to search flagged reports");
+      try {
+        const response = await fetch(`${API_URL}/flagged/search?q=${encodeURIComponent(query)}`);
+        if (!response.ok) {
+          throw new Error("Failed to search flagged reports");
+        }
+        return response.json();
+      } catch (e) {
+        console.warn("Using static flagged data", e);
+        return flaggedData.filter(flag => flag.target.includes(query));
       }
-      return response.json();
     },
     enabled: !!query && isPhoneQuery(query),
   });

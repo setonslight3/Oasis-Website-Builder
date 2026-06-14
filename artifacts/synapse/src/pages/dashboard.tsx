@@ -5,20 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Search, Users, ShieldCheck, ArrowRight, PlusCircle } from "lucide-react";
 import { ExperienceCard } from "@/components/ExperienceCard";
 import { useQuery } from "@tanstack/react-query";
+import experiencesData from "@/data/experiences.json";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export default function Dashboard() {
   const [user, setUser] = useState<{name: string, email: string} | null>(null);
 
-  const { data: experiences = [], isLoading } = useQuery({
+  const { data: experiences = experiencesData, isLoading } = useQuery({
     queryKey: ["experiences"],
     queryFn: async () => {
-      const response = await fetch(`${API_URL}/experiences`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch experiences");
+      try {
+        const response = await fetch(`${API_URL}/experiences`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch experiences");
+        }
+        return response.json();
+      } catch (e) {
+        console.warn("Using static experiences data", e);
+        return experiencesData;
       }
-      return response.json();
     },
   });
 

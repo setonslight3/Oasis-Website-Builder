@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Sparkles, Clock, MapPin, ThumbsUp, ThumbsDown, Share2, Flag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import experiencesData from "@/data/experiences.json";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
@@ -22,11 +23,16 @@ export default function Experience() {
     queryKey: ["experience", id],
     queryFn: async () => {
       if (!id) return null;
-      const response = await fetch(`${API_URL}/experiences/${id}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch experience");
+      try {
+        const response = await fetch(`${API_URL}/experiences/${id}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch experience");
+        }
+        return response.json();
+      } catch (e) {
+        console.warn("Using static experience data", e);
+        return experiencesData.find((exp: any) => exp.id === id) || null;
       }
-      return response.json();
     },
     enabled: !!id,
   });
