@@ -3,14 +3,15 @@ import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { addUserExperience, getUser } from "@/lib/storage";
+import { getUser } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const formSchema = z.object({
   title: z.string().min(10, { message: "Title must be at least 10 characters." }).max(100),
@@ -19,10 +20,12 @@ const formSchema = z.object({
   tips: z.string().optional(),
 });
 
+const API_URL = import.meta.env.VITE_API_URL || "/api";
+
 export default function Submit() {
   const [, setLocation] = useLocation();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -36,30 +39,44 @@ export default function Submit() {
 
   const storyContent = form.watch("story");
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    setIsSubmitting(true);
-    
-    const user = getUser() || { name: "Anonymous" };
-    
-    const newExp = {
-      id: `exp-user-${Date.now()}`,
-      ...values,
-      summary: values.story.substring(0, 150) + "...",
-      tags: [values.category, "Student Submitted"],
-      author: user.name,
-      date: new Date().toISOString(),
-      location: "Nigeria"
-    };
-
-    addUserExperience(newExp);
-    
-    setTimeout(() => {
-      setIsSubmitting(false);
+  const createExperience = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      const user = getUser() || { name: "Anonymous" };
+      
+      const payload = {
+        ...values,
+        summary: values.story.substring(0, 150) + "...",
+        tags: [values.category, "Student Submitted"],
+        author: user.name,
+        date: new Date().toISOString(),
+        location: "Nigeria"
+      };
+      
+      const response = await fetch(`${API_URL}/experiences`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to create experience");
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["experiences"] });
       setSuccess(true);
       setTimeout(() => {
-        setLocation(`/experience/${newExp.id}`);
+        setLocation(`/experience/${data.id}`);
       }, 2000);
-    }, 800);
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    createExperience.mutate(values);
   };
 
   if (success) {
@@ -180,8 +197,8 @@ export default function Submit() {
                   <Button asChild variant="ghost" type="button">
                     <Link href="/dashboard">Cancel</Link>
                   </Button>
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 px-8" disabled={isSubmitting}>
-                    {isSubmitting ? "Publishing..." : "Publish Experience"}
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 px-8" disabled={createExperience.isPending}>
+                    {createExperience.isPending ? "Publishing..." : "Publish Experience"}
                   </Button>
                 </div>
               </form>

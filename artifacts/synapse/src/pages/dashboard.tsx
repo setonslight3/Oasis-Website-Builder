@@ -4,18 +4,37 @@ import { getUser, getViewedExperiences } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Search, Users, ShieldCheck, ArrowRight, PlusCircle } from "lucide-react";
 import { ExperienceCard } from "@/components/ExperienceCard";
-import experiencesData from "@/data/experiences.json";
+import { useQuery } from "@tanstack/react-query";
+
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export default function Dashboard() {
   const [user, setUser] = useState<{name: string, email: string} | null>(null);
+
+  const { data: experiences = [], isLoading } = useQuery({
+    queryKey: ["experiences"],
+    queryFn: async () => {
+      const response = await fetch(`${API_URL}/experiences`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch experiences");
+      }
+      return response.json();
+    },
+  });
+
   const [recentExperiences, setRecentExperiences] = useState<any[]>([]);
 
   useEffect(() => {
     setUser(getUser());
-    const viewedIds = getViewedExperiences();
-    const recent = viewedIds.map(id => experiencesData.find(e => e.id === id)).filter(Boolean);
-    setRecentExperiences(recent.slice(0, 3));
   }, []);
+
+  useEffect(() => {
+    const viewedIds = getViewedExperiences();
+    const recent = viewedIds
+      .map(id => experiences.find((e: any) => String(e.id) === id))
+      .filter(Boolean);
+    setRecentExperiences(recent.slice(0, 3));
+  }, [experiences]);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16" data-testid="page-dashboard">

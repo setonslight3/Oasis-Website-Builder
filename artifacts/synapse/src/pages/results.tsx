@@ -1,19 +1,45 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { isPhoneQuery, searchExperiences, searchFlagged } from "@/lib/search";
-import { getUserExperiences } from "@/lib/storage";
+import { isPhoneQuery } from "@/lib/search";
 import { ExperienceCard } from "@/components/ExperienceCard";
 import { RiskScoreCard } from "@/components/RiskScoreCard";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles, CheckCircle, Search, ShieldCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export default function Results() {
   const [query, setQuery] = useState("");
   const [isPhone, setIsPhone] = useState(false);
+
+  const { data: allExperiences = [], isLoading: experiencesLoading } = useQuery({
+    queryKey: ["experiences"],
+    queryFn: async () => {
+      const response = await fetch(`${API_URL}/experiences`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch experiences");
+      }
+      return response.json();
+    },
+  });
+
+  const { data: flaggedResults = [], isLoading: flaggedLoading } = useQuery({
+    queryKey: ["flagged", query],
+    queryFn: async () => {
+      if (!query || !isPhoneQuery(query)) return [];
+      const response = await fetch(`${API_URL}/flagged/search?q=${encodeURIComponent(query)}`);
+      if (!response.ok) {
+        throw new Error("Failed to search flagged reports");
+      }
+      return response.json();
+    },
+    enabled: !!query && isPhoneQuery(query),
+  });
+
   const [results, setResults] = useState<any[]>([]);
-  const [flaggedResults, setFlaggedResults] = useState<any[]>([]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -24,19 +50,15 @@ export default function Results() {
       const phoneCheck = isPhoneQuery(q);
       setIsPhone(phoneCheck);
       
-      if (phoneCheck) {
-        setFlaggedResults(searchFlagged(q));
-      } else {
-        const allExperiences = [...searchExperiences(q), ...getUserExperiences().filter(exp => 
+      if (!phoneCheck) {
+        const filtered = allExperiences.filter((exp: any) => 
           exp.title.toLowerCase().includes(q.toLowerCase()) || 
           exp.summary.toLowerCase().includes(q.toLowerCase())
-        )];
-        // remove duplicates by id
-        const unique = Array.from(new Map(allExperiences.map(item => [item.id, item])).values());
-        setResults(unique);
+        );
+        setResults(filtered);
       }
     }
-  }, [window.location.search]);
+  }, [window.location.search, allExperiences]);
 
   if (!query) {
     return (

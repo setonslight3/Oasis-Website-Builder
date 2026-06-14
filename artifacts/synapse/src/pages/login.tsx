@@ -20,7 +20,7 @@ export default function Login() {
   };
 
   const handleGuest = () => {
-    setUser({ name: "Guest", email: "guest@oasis.edu.ng" });
+    setUser({ name: "Guest", email: "guest@synapse.edu.ng" });
     setLocation("/dashboard");
   };
 
@@ -29,7 +29,7 @@ export default function Login() {
       <Card className="w-full max-w-md shadow-lg border-0">
         <CardHeader className="space-y-3 text-center pb-8">
           <Link href="/" className="inline-block text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-emerald-500 mb-2">
-            OASIS
+            SYNAPSE
           </Link>
           <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
           <CardDescription>Sign in to access your dashboard</CardDescription>

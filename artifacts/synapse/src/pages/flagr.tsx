@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { searchFlagged } from "@/lib/search";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,13 +8,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RiskScoreCard } from "@/components/RiskScoreCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShieldCheck, Phone, User, Globe, AlertTriangle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export default function Flagr() {
   const [activeTab, setActiveTab] = useState("phone");
   const [inputValue, setInputValue] = useState("");
   const [bank, setBank] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
-  const [results, setResults] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const { data: results = [], isLoading } = useQuery({
+    queryKey: ["flagged", searchQuery],
+    queryFn: async () => {
+      if (!searchQuery) return [];
+      const response = await fetch(`${API_URL}/flagged/search?q=${encodeURIComponent(searchQuery)}`);
+      if (!response.ok) {
+        throw new Error("Failed to search flagged reports");
+      }
+      return response.json();
+    },
+    enabled: !!searchQuery,
+  });
 
   const handleCheck = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +41,7 @@ export default function Flagr() {
     if (activeTab === 'account' && bank) {
       query = `${inputValue} ${bank}`;
     }
-    setResults(searchFlagged(query));
+    setSearchQuery(query);
   };
 
   const resetForm = (tab: string) => {

@@ -1,34 +1,69 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link, useParams } from "wouter";
-import { getUserExperiences, addViewedExperience } from "@/lib/storage";
-import { summarizeExperience } from "@/lib/search";
-import experiencesData from "@/data/experiences.json";
+import { addViewedExperience } from "@/lib/storage";
+import { summarizeExperience, extractTags } from "@/lib/gemini";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, Skeleton } from "@/components/ui/card";
 import { ArrowLeft, Sparkles, Clock, MapPin, ThumbsUp, ThumbsDown, Share2, Flag } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export default function Experience() {
   const { id } = useParams();
-  const [exp, setExp] = useState<any>(null);
   const [helpful, setHelpful] = useState<boolean | null>(null);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [aiTags, setAiTags] = useState<string[] | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+
+  const { data: exp, isLoading: expLoading } = useQuery({
+    queryKey: ["experience", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const response = await fetch(`${API_URL}/experiences/${id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch experience");
+      }
+      return response.json();
+    },
+    enabled: !!id,
+  });
+
+  // Load AI content when experience data is available
+  const loadAiContent = useCallback(async () => {
+    if (!exp) return;
+    setIsAiLoading(true);
+    try {
+      const [summary, tags] = await Promise.all([
+        summarizeExperience(exp.story, exp.category),
+        extractTags(`${exp.story} ${exp.title} ${exp.tags?.join(' ') || ''}`, exp.tags)
+      ]);
+      setAiSummary(summary);
+      setAiTags(tags.length > 0 ? tags : exp.tags || []);
+    } catch (error) {
+      console.error("Failed to load AI content:", error);
+      // Fallback to original tags if AI tags fail
+      setAiTags(exp.tags || []);
+    } finally {
+      setIsAiLoading(false);
+    }
+  }, [exp]);
 
   useEffect(() => {
-    if (id) {
-      const all = [...experiencesData, ...getUserExperiences()];
-      const found = all.find(e => e.id === id);
-      if (found) {
-        setExp(found);
-        addViewedExperience(found.id);
-        
-        // Check helpfulness in localstorage
-        const savedHelpful = localStorage.getItem(`helpful_${id}`);
-        if (savedHelpful) setHelpful(savedHelpful === 'yes');
-      }
-    }
-  }, [id]);
+    if (exp) {
+      addViewedExperience(String(exp.id));
+      
+      // Check helpfulness in localstorage
+      const savedHelpful = localStorage.getItem(`helpful_${exp.id}`);
+      if (savedHelpful) setHelpful(savedHelpful === 'yes');
 
-  if (!exp) return null;
+      // Load AI content
+      loadAiContent();
+    }
+  }, [exp, loadAiContent]);
+
+  if (expLoading || !exp) return null;
 
   const handleHelpful = (isHelpful: boolean) => {
     setHelpful(isHelpful);
@@ -48,6 +83,7 @@ export default function Experience() {
 
   // Split story into paragraphs
   const paragraphs = exp.story.split('\n\n');
+  const displayTags = aiTags || exp.tags || [];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24" data-testid={`page-experience-${id}`}>
@@ -95,11 +131,24 @@ export default function Experience() {
               <div className="bg-white p-3 rounded-xl shadow-sm h-fit shrink-0">
                 <Sparkles className="w-6 h-6 text-indigo-600" />
               </div>
-              <div>
-                <h3 className="font-bold text-indigo-950 text-lg mb-2">AI Summary</h3>
-                <p className="text-indigo-900 leading-relaxed">
-                  {summarizeExperience(exp)}
-                </p>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="font-bold text-indigo-950 text-lg">AI Summary</h3>
+                  <Badge className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 border-purple-200 font-medium text-xs">
+                    ✨ AI Generated
+                  </Badge>
+                </div>
+                {isAiLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full bg-indigo-200" />
+                    <Skeleton className="h-4 w-3/4 bg-indigo-200" />
+                    <Skeleton className="h-4 w-5/6 bg-indigo-200" />
+                  </div>
+                ) : (
+                  <p className="text-indigo-900 leading-relaxed">
+                    {aiSummary || "Loading AI summary..."}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -122,11 +171,19 @@ export default function Experience() {
 
         <div className="border-t border-gray-200 pt-8 mt-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
           <div className="flex flex-wrap gap-2">
-            {exp.tags.map((tag: string) => (
-              <Badge key={tag} variant="outline" className="bg-white text-gray-600 border-gray-200">
-                {tag}
-              </Badge>
-            ))}
+            {isAiLoading ? (
+              <>
+                <Skeleton className="h-6 w-20 rounded-full" />
+                <Skeleton className="h-6 w-24 rounded-full" />
+                <Skeleton className="h-6 w-16 rounded-full" />
+              </>
+            ) : (
+              displayTags.map((tag: string) => (
+                <Badge key={tag} variant="outline" className="bg-white text-gray-600 border-gray-200">
+                  {tag}
+                </Badge>
+              ))
+            )}
           </div>
           
           <div className="flex items-center gap-4 bg-white p-2 rounded-xl shadow-sm border border-gray-100 w-full sm:w-auto">

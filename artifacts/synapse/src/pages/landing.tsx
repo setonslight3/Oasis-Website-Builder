@@ -17,7 +17,7 @@ export default function Landing() {
         <div className="relative z-10 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
           <div className="inline-block mb-4">
             <span className="text-4xl md:text-5xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
-              OASIS
+              SYNAPSE
             </span>
           </div>
           

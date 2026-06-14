@@ -28,7 +28,7 @@ export default function Search() {
   };
 
   const handleClearRecent = () => {
-    localStorage.removeItem('oasis_recent_searches');
+    localStorage.removeItem('synapse_recent_searches');
     setRecent([]);
   };
 

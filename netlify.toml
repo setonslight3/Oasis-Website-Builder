@@ -1,6 +1,6 @@
 [build]
-  command = "pnpm install && pnpm --filter @workspace/oasis run build"
-  publish = "artifacts/oasis/dist/public"
+  command = "pnpm install && pnpm --filter @workspace/synapse run build"
+  publish = "artifacts/synapse/dist/public"
 
 [build.environment]
   NETLIFY_USE_PNPM = "true"

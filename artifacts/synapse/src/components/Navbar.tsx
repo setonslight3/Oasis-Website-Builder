@@ -41,7 +41,7 @@ export function Navbar() {
       <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
         <div className="flex items-center">
           <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent hover:opacity-90 transition-opacity" data-testid="link-home">
-            OASIS
+            SYNAPSE
           </Link>
         </div>
 
