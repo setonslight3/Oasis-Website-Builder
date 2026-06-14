@@ -1,10 +1,10 @@
 [build]
-  command = "pnpm install && pnpm --filter @workspace/synapse run build"
+  command = "pnpm install --no-frozen-lockfile && pnpm --filter @workspace/synapse run build"
   publish = "artifacts/synapse/dist/public"
 
 [build.environment]
   NETLIFY_USE_PNPM = "true"
-  PNPM_VERSION = "9"
+  PNPM_VERSION = "10"
 
 [[redirects]]
   from = "/*"
