@@ -1,0 +1,8 @@
+[build]
+  command = "pnpm --filter @workspace/oasis run build"
+  publish = "artifacts/oasis/dist/public"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
