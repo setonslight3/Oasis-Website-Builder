@@ -2,15 +2,17 @@ import { Link, useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { getUser, logout } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, Sun, Moon } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useTheme } from "@/hooks/use-theme";
 
 export function Navbar() {
   const [location, setLocation] = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const user = getUser();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,8 +35,8 @@ export function Navbar() {
 
   return (
     <nav
-      className={`sticky top-0 z-50 w-full transition-all duration-200 bg-white ${
-        scrolled ? "shadow-md" : "border-b border-gray-100"
+      className={`sticky top-0 z-50 w-full transition-all duration-200 bg-background ${
+        scrolled ? "shadow-md" : "border-b border-border"
       }`}
       data-testid="navbar"
     >
@@ -51,8 +53,8 @@ export function Navbar() {
             <Link
               key={link.name}
               href={link.href}
-              className={`text-sm font-medium transition-colors hover:text-blue-600 ${
-                location.startsWith(link.href) && link.href !== "/" ? "text-blue-600" : "text-gray-600"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                location.startsWith(link.href) && link.href !== "/" ? "text-primary" : "text-muted-foreground"
               }`}
               data-testid={`link-nav-${link.name.toLowerCase()}`}
             >
@@ -63,12 +65,20 @@ export function Navbar() {
 
         {/* Desktop Auth */}
         <div className="hidden md:flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            data-testid="button-theme-toggle"
+          >
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full" data-testid="button-user-menu">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">
+                    <AvatarFallback className="bg-blue-100 text-blue-700 font-medium dark:bg-blue-900 dark:text-blue-200">
                       {user.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -88,19 +98,27 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild variant="default" className="bg-blue-600 hover:bg-blue-700 text-white" data-testid="button-signin-nav">
+            <Button asChild variant="default" className="bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="button-signin-nav">
               <Link href="/login">Sign In</Link>
             </Button>
           )}
         </div>
 
         {/* Mobile menu button */}
-        <div className="md:hidden flex items-center">
+        <div className="md:hidden flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            data-testid="button-theme-toggle-mobile"
+          >
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-gray-600"
+            className="text-muted-foreground"
             data-testid="button-mobile-menu"
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -110,29 +128,29 @@ export function Navbar() {
 
       {/* Mobile Nav */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-gray-100 pb-4 px-4 space-y-3 shadow-lg">
+        <div className="md:hidden bg-background border-b border-border pb-4 px-4 space-y-3 shadow-lg">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               href={link.href}
               className={`block py-2 text-base font-medium ${
-                location.startsWith(link.href) && link.href !== "/" ? "text-blue-600" : "text-gray-600"
+                location.startsWith(link.href) && link.href !== "/" ? "text-primary" : "text-muted-foreground"
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
               {link.name}
             </Link>
           ))}
-          <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+          <div className="pt-4 border-t border-border flex items-center justify-between">
             {user ? (
               <>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">
+                    <AvatarFallback className="bg-blue-100 text-blue-700 font-medium dark:bg-blue-900 dark:text-blue-200">
                       {user.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="font-medium text-sm text-gray-900">{user.name}</span>
+                  <span className="font-medium text-sm text-foreground">{user.name}</span>
                 </div>
                 <Button variant="ghost" size="sm" onClick={handleLogout} className="text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
@@ -140,7 +158,7 @@ export function Navbar() {
                 </Button>
               </>
             ) : (
-              <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setMobileMenuOpen(false)}>
+              <Button asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setMobileMenuOpen(false)}>
                 <Link href="/login">Sign In</Link>
               </Button>
             )}
