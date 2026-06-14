@@ -4,7 +4,8 @@ import { addViewedExperience } from "@/lib/storage";
 import { summarizeExperience, extractTags } from "@/lib/gemini";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, Skeleton } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Sparkles, Clock, MapPin, ThumbsUp, ThumbsDown, Share2, Flag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
