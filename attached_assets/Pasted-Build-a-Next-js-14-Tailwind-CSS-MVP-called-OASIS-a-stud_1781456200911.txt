@@ -1,0 +1,311 @@
+Build a Next.js 14 + Tailwind CSS MVP called "OASIS" — a student platform combining educational discovery, peer-shared experiences, and fraud detection (Flagr). This is a clickable demo with mock data, NOT a production system. Focus on polished UI and believable data.
+
+## Tech Stack
+- Next.js 14 with App Router and TypeScript
+- Tailwind CSS configured with custom colors
+- Lucide React for icons
+- localStorage for persistence (no real backend)
+- Mock JSON data in /data folder
+
+## Design System
+Configure tailwind.config.js with these colors:
+- Primary: #2563EB (blue-600)
+- Accent: #10B981 (emerald-500)
+- Background: #FFFFFF
+- Surface: #F9FAFB
+- Text Primary: #111827
+- Text Secondary: #6B7280
+- Danger: #EF4444
+- Warning: #F59E0B
+
+Use Inter font, rounded-xl cards, rounded-lg buttons, shadow-sm on cards, max-w-6xl container.
+
+## Folder Structure
+/app/layout.tsx, /app/page.tsx, /app/login/page.tsx, /app/dashboard/page.tsx, /app/search/page.tsx, /app/results/page.tsx, /app/experience/[id]/page.tsx, /app/submit/page.tsx, /app/flagr/page.tsx, /app/not-found.tsx
+/components: Navbar.tsx, Footer.tsx, SearchBar.tsx, ResultCard.tsx, FraudCard.tsx, ExperienceCard.tsx, Button.tsx, Card.tsx
+/data: experiences.json, flagged.json
+/lib: search.ts, storage.ts
+
+## Page 1: Landing Page (/)
+- Full-screen hero with gradient background (blue to emerald)
+- Headline: "One place you will never have to leave."
+- Subheadline: "Discover opportunities, share experiences, and stay safe from scams. Built for Nigerian students."
+- Two CTAs: Primary "Try Demo" (links to /dashboard), Secondary "Sign In" (links to /login)
+- 3 feature cards below: Universal Search, Experience Network, Flagr
+- Each card: icon, title, short description
+- Subtle fade-in animation on load
+
+## Page 2: Login Page (/login)
+- Centered card (max-w-md)
+- Logo at top, Email field, Password field
+- "Sign In" button (primary, any credentials work)
+- "Continue as Guest" link below → /dashboard
+- Mock auth: store fake user in localStorage
+
+## Page 3: Dashboard (/dashboard)
+- Welcome banner: "Welcome back, [Name]"
+- 3 large interactive cards in a grid:
+  1. Search - "Find what you need" → /search
+  2. Experience Network - "Read student stories" → /search
+  3. Flagr - "Check for fraud" → /flagr
+- Each card: icon, title, description, "Open" button
+- "Recent Activity" section below showing last 3 viewed experiences from localStorage
+
+## Page 4: Universal Search (/search)
+- Large centered search bar with magnifying glass icon
+- Placeholder: "Search scholarships, admissions, phone numbers..."
+- Example chips below (clickable): "Canada scholarship", "FUPRE admission", "08123456789"
+- Enter or click chip → /results?q=...
+- Recent searches shown below from localStorage
+
+## Page 5: Results Page (/results?q=...)
+- Show search query at top: "Results for: [query]"
+- Smart routing based on query:
+  - If query is phone-like (regex: /^[0-9+\-\s()]{7,}$/) → show Flagr results
+  - Otherwise → show Educational results
+
+Educational Results:
+- AI Summary card at top with sparkle icon (2-3 sentence mock summary)
+- "Related Experiences" section with 2-3 ExperienceCards
+- "Related Topics" pill list linking back to search
+
+Flagr Results:
+- Large Risk Score card: phone number, risk level (HIGH/MEDIUM/LOW with color), confidence %, warning if reports > 0
+- Linked Reports list: 2-3 mock reports with type, description, date, reporter count
+- Recommendation box (colored by risk level)
+
+## Page 6: Experience Detail (/experience/[id])
+- Back button at top
+- Hero with category tag and title
+- Full story text (3-4 paragraphs of believable content)
+- AI Summary box (2-sentence version + extracted tags as pills)
+- Tags displayed prominently
+- "Shared by Anonymous Student • 3 days ago"
+- "Was this helpful?" thumbs up/down buttons
+- "Report this experience" link (UI only)
+
+## Page 7: Submit Experience (/submit)
+- Form fields:
+  - Title (text input, required)
+  - Category (dropdown: Scholarship, Admission, Visa, Accommodation, Job, Other)
+  - Story (textarea, 500 char limit with counter)
+  - Tips for others (textarea, optional)
+- "Submit Experience" button (primary)
+- On submit: success modal "Thanks for sharing! Your experience helps other students."
+- Store in localStorage, auto-redirect to new experience page after 2 seconds
+- Cancel link → /dashboard
+
+## Page 8: Flagr Page (/flagr)
+- Hero: "Check before you trust."
+- Tabs: Phone | Account Name | Website
+- Form changes based on tab (phone input, text + bank dropdown, URL input)
+- Common: "Description of incident" textarea
+- "Check Now" button
+- Results appear below with same risk score UI
+
+## Component Specs
+
+Navbar.tsx:
+- Sticky top, white bg, subtle shadow on scroll
+- Left: OASIS logo (gradient text)
+- Center: links to Search, Experiences, Flagr
+- Right: "Sign Out" or user avatar
+- Mobile: hamburger menu
+
+Footer.tsx:
+- Gray background, 3 columns (About, Quick Links, Contact)
+- Copyright + "Built for Nigerian students" tagline
+
+SearchBar.tsx:
+- Props: placeholder, onSearch, size (lg/md)
+- Search icon inside input
+
+ResultCard.tsx:
+- Category icon, title, summary snippet, tags, "Read more" link
+
+FraudCard.tsx:
+- Type badge, target, risk level pill, report count, date
+
+ExperienceCard.tsx:
+- Category tag, title, author, date, short excerpt, "Read" button
+- Hover: slight lift + shadow
+
+Button.tsx:
+- Variants: primary, secondary (outline), danger
+- Sizes: sm, md, lg
+
+Card.tsx:
+- Wrapper with consistent padding, border, shadow, rounded-xl
+
+## Mock Data
+
+/data/experiences.json (8+ items):
+```json
+[
+  {
+    "id": "exp-001",
+    "title": "How I Got the Canada Scholarship",
+    "category": "Scholarship",
+    "summary": "Apply early and prepare transcripts. The Vanier CGS requires a 3.7+ GPA.",
+    "story": "I started preparing 8 months before the deadline. Here's my full story...",
+    "tips": "Start early. Get strong recommendation letters. Proofread your essays multiple times.",
+    "tags": ["Scholarship", "Canada", "Postgraduate"],
+    "author": "Anonymous Student",
+    "date": "2024-01-15",
+    "location": "Lagos, Nigeria"
+  },
+  {
+    "id": "exp-002",
+    "title": "FUPRE Admission Process 2024",
+    "category": "Admission",
+    "summary": "Upload documents before deadline. JAMB score of 220+ recommended.",
+    "story": "Here's my full experience with the Federal University of Petroleum Resources...",
+    "tips": "Have all documents scanned and ready. Don't wait until the last day.",
+    "tags": ["Admission", "FUPRE", "Undergraduate"],
+    "author": "Tunde A.",
+    "date": "2024-02-20",
+    "location": "Effurun, Delta"
+  },
+  {
+    "id": "exp-003",
+    "title": "UK Student Visa Interview Tips",
+    "category": "Visa",
+    "summary": "Be confident, know your course, and explain your funding clearly.",
+    "story": "The visa interview was the most stressful part of my UK application...",
+    "tips": "Practice common questions. Bring all supporting documents.",
+    "tags": ["Visa", "UK", "International"],
+    "author": "Chioma O.",
+    "date": "2024-03-10",
+    "location": "Abuja"
+  },
+  {
+    "id": "exp-004",
+    "title": "Cheap Hostels Near University of Lagos",
+    "category": "Accommodation",
+    "summary": "Found safe accommodation for 80k per session near UNILAG main gate.",
+    "story": "After weeks of searching, I found a clean hostel within walking distance...",
+    "tags": ["Accommodation", "UNILAG", "Lagos"],
+    "author": "Anonymous",
+    "date": "2024-02-05",
+    "location": "Akoka, Lagos"
+  },
+  {
+    "id": "exp-005",
+    "title": "Remote Internship at Nigerian Fintech",
+    "category": "Job",
+    "summary": "Landed a remote marketing internship through Twitter networking.",
+    "story": "I tweeted about my skills and got a DM from a startup founder...",
+    "tags": ["Job", "Internship", "Remote"],
+    "author": "Ibrahim K.",
+    "date": "2024-03-15",
+    "location": "Remote"
+  }
+]
+```
+
+/data/flagged.json (5+ items):
+```json
+[
+  {
+    "id": "flag-001",
+    "type": "phone",
+    "target": "08123456789",
+    "risk": "High",
+    "confidence": 92,
+    "reports": 5,
+    "description": "Fake scholarship agent demanding upfront payment of 50k",
+    "category": "Fake Agent",
+    "date": "2024-03-01"
+  },
+  {
+    "id": "flag-002",
+    "type": "account",
+    "target": "John Doe - 0123456789 (GTBank)",
+    "risk": "High",
+    "confidence": 88,
+    "reports": 3,
+    "description": "Posing as admissions officer, requesting processing fees",
+    "category": "Impersonation",
+    "date": "2024-02-15"
+  },
+  {
+    "id": "flag-003",
+    "type": "website",
+    "target": "scholarship-canada-ng.com",
+    "risk": "Medium",
+    "confidence": 65,
+    "reports": 2,
+    "description": "Cloned official site, collects personal data",
+    "category": "Phishing",
+    "date": "2024-03-10"
+  },
+  {
+    "id": "flag-004",
+    "type": "phone",
+    "target": "07085551234",
+    "risk": "Medium",
+    "confidence": 60,
+    "reports": 2,
+    "description": "Promises guaranteed visa, requests payment upfront",
+    "category": "Visa Scam",
+    "date": "2024-01-20"
+  },
+  {
+    "id": "flag-005",
+    "type": "account",
+    "target": "Mary Smith - 9876543210 (Access Bank)",
+    "risk": "Low",
+    "confidence": 25,
+    "reports": 1,
+    "description": "Charges hidden fees for accommodation booking",
+    "category": "Hidden Fees",
+    "date": "2024-02-28"
+  }
+]
+```
+
+## Logic (/lib/search.ts)
+- isPhoneQuery(query) — checks if query is phone-like
+- searchExperiences(query) — fuzzy match on title, summary, tags, category
+- searchFlagged(query) — exact and partial match on target field
+- summarizeExperience(exp) — returns mock AI summary string
+- extractTags(text) — returns mock tags based on keywords
+
+## Storage (/lib/storage.ts)
+- getUser(), setUser(), logout()
+- getRecentSearches(), addRecentSearch()
+- getUserExperiences(), addUserExperience()
+- getViewedExperiences(), addViewedExperience()
+
+## Polish Requirements
+- Loading states with skeleton loaders on results
+- Empty states with friendly messages
+- Custom 404 page: "Lost in the desert"
+- Mobile-first responsive design
+- Smooth transitions and hover effects
+- Toast notifications on submit success
+- Proper accessibility (labels, focus rings, semantic HTML)
+
+## Do NOT Build
+- Real authentication
+- Real database
+- Real AI API calls (mock all AI)
+- Admin dashboard
+- Payment integration
+- Email notifications
+- Real moderation
+- Vector search
+
+## Verification Checklist
+1. Landing loads with hero and features
+2. "Try Demo" goes to dashboard
+3. Search accepts input
+4. "Canada scholarship" shows educational results
+5. "08123456789" shows Flagr results with risk score
+6. Experience detail page renders with AI summary
+7. Submit form saves to localStorage and redirects
+8. Flagr tabs switch and show results
+9. Mobile responsive
+10. Navbar on every page except landing
+
+Build it clean, build it fast, build it beautiful.
